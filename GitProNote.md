@@ -54,7 +54,8 @@
 - git push origin master：把本地master分支推送到origin远程库上，如果要推送dev分支的话就git push origin dev
 - git pull：将远程库上的版本拉下来。常用发生的情况是你提交的时候，发现别人已经提交过了，你本地的版本落后了，所以要先git pull把远程库上的新版本拉下来，本地解决冲突，git commit，重新git push origin #branch_name#推送到远程库上。
 - git tag #tag_name#：给提交打标签，这样就不用记住一长串哈希值。默认给当前分支的最新提交打标签。
-- git tag #tag_name# #hash_code#：给某次提交打标签，hash_code可以通过git log查看
+- git tag -a #tag_name# -m "#comment#" #hash_code#：给某次提交打标签，hash_code可以通过git log查看。
+- git show #tag_name#：查看某次标签详细内容
 
 - git rm：从版本库里删除一个文件
 
