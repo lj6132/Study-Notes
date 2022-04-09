@@ -26,8 +26,6 @@
 
 
 
-# git存储的方式
-
 ## git add和git commit的时候发生了什么？
 
 - 将被改写的文件保存为数据对象
@@ -51,9 +49,13 @@
 ![20220408111129](.\img\20220408111129.png)
 
 - 创建一个***指明顶层树对象***和***父提交***的***提交对象***
-  - 通过git commit-tree #tree_SHA# -p #parent_commit#，可以将tree_SHA对应的树进行提交（代表着当前项目的快照），这个树的父提交（也就是你这个节点对应的上一节点）号是parent_commit。提交时会返回这个提交对象对应的的SHA-1值。
+  - 通过git commit-tree #tree_SHA# -p #parent_commit#，可以将tree_SHA对应的树进行提交（代表着当前项目的快照），这个树的父提交（也就是你这个节点对应的上一节点，如果是由多个分支合并而来的话，就会有多个父指针）号是parent_commit。提交时会返回这个提交对象对应的的SHA-1值。
 
-​	例如，下图中有三个提交对象，以third commit的提交对象为例，这个提交对象的SHA-1值为1a410e，父对象为cac0ca对应的上一次提交，意味着他是从cac0ca这个提交上面延续而来的（这个cac0ca是通过HEAD来找到的当前对象的SHA-1值）。通过这个父指针，就可以在git log中回溯得到整个提交历史。提交的内容都是一棵树，组织了这次提交里的所有文件。这次提交里没有修改任何文件，只是把现有的两个文件和d8329f树组装在一起了，所以树里没有多少数据文件，只有指针（也就是这些文件的SHA-1值）。通过这些指针，能找到third commit这个版本里所有的数据对象（从object里可以把对象找出来）
+​		在一次提交里，会有三类对象：数据对象、本次提交的目录树对象、提交对象。如下图所示。数据对象就是暂存区里的每一个数据，有可能是树，也有可能是文件。本次提交的目录树对象是指将整个暂存区的现状构建成一个树，里面有可能包含子树。提交对象就是本次提交的信息。
+
+![20220409104357](.\img\20220409104357.png)
+
+​		多次提交的情况如下图。下图中有三个提交对象，以third commit的提交对象为例，这个提交对象的SHA-1值为1a410e，父对象为cac0ca对应的上一次提交，意味着他是从cac0ca这个提交上面延续而来的（这个cac0ca是通过HEAD来找到的当前对象的SHA-1值）。通过这个父指针，就可以在git log中回溯得到整个提交历史。提交的内容都是一棵树，组织了这次提交里的所有文件。这次提交里没有修改任何文件，只是把现有的两个文件和d8329f树组装在一起了，所以树里没有多少数据文件，只有指针（也就是这些文件的SHA-1值）。通过这些指针，能找到third commit这个版本里所有的数据对象（从object里可以把对象找出来）
 
 ![20220408112750](.\img\20220408112750.png)
 
@@ -63,6 +65,8 @@
 ![20220408115253](.\img\20220408115253.png)
 
 - 总结如下：单个文件会存成数据对象，整个版本的状态会存成树对象，所有的对象都会经过哈希，存到object下（类似linux的一切皆文件）。
+
+
 
 ## git的包文件
 
@@ -78,6 +82,8 @@
 
 ![20220408165646](.\img\20220408165646.png)
 
+
+
 ## git branch和git checkout时发生了什么？
 
 - git branch和git checkout是通过修改HEAD文件来实现的，HEAD文件通常是一个符号引用（就是里面写了一个路径，读取这个路径才能找到当前版本对象）例如，某次HEAD里的内容可能是【ref: refs/heads/master】，refs里记录的是对提交对象的引用，例如master里记录的可能就是当前最新版本的SHA-1值。
@@ -87,38 +93,108 @@
 
 # Git指令
 
+## 常用指令
+
 - git init：新建.git目录
-- git add
-- git commit
-- git status：
-- git diff #file_path#：查看文件中的修改内容
-- git log：看提交日志，可以加上--pretty=oneline这样就可以在一行里显示所有的提交。
+
+
+
+- git add：将文件添加到暂存区
+
+
+
+- git commit：将暂存区内容提交
+
+
+
+- git status：查看当前项目中所有文件的状态
+- git status -s：紧凑输出文件的状态，M代表modify，A代表add，左列是暂存区的状态，右列是工作区的状态
+
+
+
+- **git diff #file_path#**：查看**工作区**文件和**暂存区**快照中的差异
+- git diff --staged：查看**暂存区**快照和**最后一次提交**的文件的差异
+
+
+
+- git log：看提交日志，可以加上--pretty=oneline这样就可以在一行里显示所有的提交
 - git log --graph --pretty=oneline --abbrev-commit：更加易懂的提交日志
+
+
+
 - git reset --hard #hash_code#：回退到某个历史版本。注意，回退之后，后面的版本就很难找回来了，除非没有关终端，记得未来的某个版本号。
-- git reset HEAD #file_path#：将**暂存区的**某个修改撤销掉，放回工作区。
+- git reset HEAD #file_path#：将**暂存区的**某个文件撤销掉，放回工作区。
+
+
+
 - **git reflog**：查看引用日志，每一次提交或改变分支，引用日志都会被更新。如果回退了，终端关了，还想找到未来的版本，可以在这里看到所有命令以及每次命令对应的版本号，通过版本号来恢复。
+
+
+
 - git checkout -- #file_path#：让**工作区的**文件回到最近一次git add或git commit时的状态，其实就是用版本库里的版本替换工作区的版本。**注意：**--非常重要，如果没有--，就表示切换到另一个分支的命令
 - git checkout -b #branch_name#：切换分支到branch_name上，-b表示创建并切换，相当于执行了git branch #branch_name#和git checkout #branch_name#
+
+
+
 - git switch #branch_name#：切换分支，和git checkout效果一样，更容易理解
+
+
+
 - git branch：列出所有分支
 - git branch -d #branch_name#：删除某个分支
+
+
+
 - git merge #branch_name#：合并**指定分支**到**当前分支**。如果没有冲突的话，就会显示Fast-forward，即直接把master指向#branch_name#的当前提交。中间带上--no-ff的话会更安全，表示禁用Fast-forward模式，因为在Fastforward模式下，被合并分支的信息就丢失了，而禁用的话，就会给被合并分支创建一个commit（所以--no-ff后面还要加-m，给这次commit附带提交信息），这样就能在日志里找到这个分支，方便以后回退。如果发生冲突了，根据提示找到冲突文件，把里面的内容手动改了，把<<<<<和>>>>>这些提示删掉，对这些冲突文件进行git add和git commit，就能将两个分支合并起来了。
+
+
+
 - **git stash**：把当前**工作区**的内容先存起来，这时可以去干别的事，干完再恢复工作区就好
 - git stash list：查看stash区里存的内容
 - git stash pop：把stash区的内容恢复到工作区里，并从list里删除。相当于先git stash apply #stash_code#，再git stash drop #stash_code#
-- git cherry-pick #hash_code#：把某次提交的内容应用到当前分支上
-- git remote -v：查看远程库的信息
+
+
+
+- git cherry-pick #hash_code#：把某次提交的内容应用到当前分支上（移花接木，懒得重复执行某次更改时可以用这个）
+
+
+
 - git push origin master：把本地master分支推送到origin远程库上，如果要推送dev分支的话就git push origin dev
-- git pull：将远程库上的版本拉下来。常用发生的情况是你提交的时候，发现别人已经提交过了，你本地的版本落后了，所以要先git pull把远程库上的新版本拉下来，本地解决冲突，git commit，重新git push origin #branch_name#推送到远程库上。
-- git tag #tag_name#：给提交打标签，这样就不用记住一长串哈希值。默认给当前分支的最新提交打标签。
-- git tag -a #tag_name# -m "#comment#" #hash_code#：给某次提交打标签，hash_code可以通过git log查看。
+
+
+
+- git pull：将远程库上的版本拉下来。常用发生的情况是你提交的时候，发现别人已经提交过了，你本地的版本落后了，所以要先git pull把远程库上的新版本拉下来，本地解决冲突，git commit，重新git push origin #branch_name#推送到远程库上
+
+
+
+- git tag #tag_name#：给提交打标签，这样就不用记住一长串哈希值。默认给当前分支的最新提交打标签
+- git tag -a #tag_name# -m "#comment#" #hash_code#：给某次提交打标签，hash_code可以通过git log查看
+
+
+
 - git show #tag_name#：查看某次标签详细内容
 
-- git rm：从版本库里删除一个文件
+
+
+- git rm：从版本库里删除一个文件，在工作目录删除文件之后，还要用这个来将文件移出版本管理的范围。
+
+
+
+- git remote -v：查看对应的远程仓库信息
+- git remote show #branch_name#：查看远程仓库的所有分支的信息
+
+
+
+- git fetch <remote> ：从远程仓库中拉取所有你还没有的数据，和git pull不同的地方在于，git pull拉去后会自动将远程分支和本地分支合并，而git fetch只会把文件拉下来，不会动本地的工作，需要自己手动来处理冲突并合并两个分支的工作。
+
+
 
 
 
 # 辅助指令
 
-- find .git/objects -type f：查找objects下所有文件，-type是自动判断文件类型
-- 
+- git config --global user.name ''#name#''：全局配置用户名信息
+- git config --global user.email #email#：全局配置邮件地址
+- git config --list --show-origin：查看git配置
+- git help #command_name#：查看command_name的帮助手册
+- git #command_name# -h：查看command_name后面可以带的选项
